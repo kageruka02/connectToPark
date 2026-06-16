@@ -8,29 +8,28 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "occupancy_logs")
+@Table(name = "parking_events")
 @Getter
 @Setter
 @NoArgsConstructor
-public class OccupancyLog {
+public class ParkingEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 10)
-    private String slotCode;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private SlotStatus status;
+    private int availableSlots;
+
+    @Column(nullable = false)
+    private int totalSlots;
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    public OccupancyLog(String slotCode, SlotStatus status) {
-        this.slotCode = slotCode;
-        this.status = status;
+    public ParkingEvent(int availableSlots, int totalSlots) {
+        this.availableSlots = availableSlots;
+        this.totalSlots = totalSlots;
         this.timestamp = LocalDateTime.now();
     }
 }

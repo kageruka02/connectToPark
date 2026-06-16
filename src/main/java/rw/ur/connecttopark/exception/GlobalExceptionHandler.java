@@ -15,22 +15,11 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(SlotNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleSlotNotFound(SlotNotFoundException ex) {
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(SlotAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleSlotAlreadyExists(SlotAlreadyExistsException ex) {
+    @ExceptionHandler(ParkingLotAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleParkingLotAlreadyExists(ParkingLotAlreadyExistsException ex) {
         return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
 
-    @ExceptionHandler(InvalidStatusException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidStatus(InvalidStatusException ex) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
-    }
-
-    // Handles @Valid failures on request bodies
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
@@ -44,11 +33,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
-    // Catches malformed JSON or unknown enum value in request body
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleUnreadable(HttpMessageNotReadableException ex) {
-        String message = "Malformed request body. Check that 'status' is FREE or OCCUPIED.";
-        return buildError(HttpStatus.BAD_REQUEST, message);
+        return buildError(HttpStatus.BAD_REQUEST, "Malformed request body. Check JSON format and field types.");
     }
 
     @ExceptionHandler(Exception.class)

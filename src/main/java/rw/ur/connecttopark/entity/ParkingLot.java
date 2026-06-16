@@ -8,29 +8,32 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "parking_slots")
+@Table(name = "parking_lot")
 @Getter
 @Setter
 @NoArgsConstructor
-public class ParkingSlot {
+public class ParkingLot {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 10)
-    private String slotCode;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private SlotStatus status = SlotStatus.FREE;
+    private String name;
+
+    @Column(nullable = false)
+    private int totalCapacity;
+
+    @Column(nullable = false)
+    private int availableSlots;
 
     @Column(nullable = false)
     private LocalDateTime lastUpdated;
 
-    public ParkingSlot(String slotCode) {
-        this.slotCode = slotCode;
-        this.status = SlotStatus.FREE;
+    public ParkingLot(String name, int totalCapacity) {
+        this.name = name;
+        this.totalCapacity = totalCapacity;
+        this.availableSlots = totalCapacity;
         this.lastUpdated = LocalDateTime.now();
     }
 }
