@@ -13,7 +13,11 @@ import rw.ur.connecttopark.repository.ParkingEventRepository;
 import rw.ur.connecttopark.repository.ParkingLotRepository;
 import rw.ur.connecttopark.websocket.ParkingBroadcaster;
 
+import org.mockito.ArgumentCaptor;
+import rw.ur.connecttopark.dto.ParkingResponseDTO;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -271,5 +275,62 @@ class ParkingControllerIntegrationTest {
         mockMvc.perform(get("/api/parking/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availableSlots").value(2));
+    }
+
+    // ── WebSocket broadcast verification ────────────────────────────────────────
+
+    @Test
+    void updateStatus_broadcastsCorrectPayload() throws Exception {
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":7,\"totalSlots\":10}"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<ParkingResponseDTO> captor = ArgumentCaptor.forClass(ParkingResponseDTO.class);
+        verify(broadcaster, times(1)).broadcast(captor.capture());
+
+        ParkingResponseDTO broadcasted = captor.getValue();
+        assertThat(broadcasted.getAvailableSlots()).isEqualTo(7);
+        assertThat(broadcasted.getTotalSlots()).isEqualTo(10);
+        assertThat(broadcasted.isFull()).isFalse();
+    }
+
+    @Test
+    void updateStatus_fullParking_broadcastsIsFullTrue() throws Exception {
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":0,\"totalSlots\":10}"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<ParkingResponseDTO> captor = ArgumentCaptor.forClass(ParkingResponseDTO.class);
+        verify(broadcaster).broadcast(captor.capture());
+
+        assertThat(captor.getValue().isFull()).isTrue();
+        assertThat(captor.getValue().getAvailableSlots()).isZero();
+    }
+
+    @Test
+    void updateStatus_calledTwice_broadcastsTwice() throws Exception {
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":8,\"totalSlots\":10}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":6,\"totalSlots\":10}"))
+                .andExpect(status().isOk());
+
+        verify(broadcaster, times(2)).broadcast(any(ParkingResponseDTO.class));
+    }
+
+    @Test
+    void createParkingLot_doesNotTriggerBroadcast() throws Exception {
+        mockMvc.perform(post("/api/parking")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"UR Parking\",\"totalCapacity\":10}"))
+                .andExpect(status().isCreated());
+
+        verify(broadcaster, never()).broadcast(any());
     }
 }
