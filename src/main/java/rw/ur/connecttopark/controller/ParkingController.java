@@ -10,6 +10,7 @@ import rw.ur.connecttopark.dto.ParkingLotDTO;
 import rw.ur.connecttopark.dto.ParkingResponseDTO;
 import rw.ur.connecttopark.dto.ParkingStatusDTO;
 import rw.ur.connecttopark.service.ParkingService;
+import rw.ur.connecttopark.websocket.ParkingBroadcaster;
 
 @RestController
 @RequestMapping("/api/parking")
@@ -18,6 +19,7 @@ import rw.ur.connecttopark.service.ParkingService;
 public class ParkingController {
 
     private final ParkingService parkingService;
+    private final ParkingBroadcaster broadcaster;
 
     @PostMapping
     public ResponseEntity<ParkingLotDTO> createParkingLot(@Valid @RequestBody CreateParkingLotDTO dto) {
@@ -35,7 +37,9 @@ public class ParkingController {
 
     @PostMapping("/status")
     public ResponseEntity<ParkingResponseDTO> updateStatus(@Valid @RequestBody ParkingStatusDTO dto) {
-        return ResponseEntity.ok(parkingService.updateStatus(dto));
+        ParkingResponseDTO response = parkingService.updateStatus(dto);
+        broadcaster.broadcast(response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/status")

@@ -12,10 +12,8 @@ import rw.ur.connecttopark.entity.ParkingLot;
 import rw.ur.connecttopark.exception.ParkingLotAlreadyExistsException;
 import rw.ur.connecttopark.repository.ParkingEventRepository;
 import rw.ur.connecttopark.repository.ParkingLotRepository;
-import rw.ur.connecttopark.websocket.ParkingBroadcaster;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,11 +21,10 @@ public class ParkingService {
 
     private final ParkingLotRepository lotRepository;
     private final ParkingEventRepository eventRepository;
-    private final ParkingBroadcaster broadcaster;
 
     @Transactional
     public ParkingLotDTO createParkingLot(CreateParkingLotDTO dto) {
-        if (!lotRepository.findAll().isEmpty()) {
+        if (lotRepository.findFirstByOrderByIdAsc().isPresent()) {
             throw new ParkingLotAlreadyExistsException();
         }
         ParkingLot lot = lotRepository.save(new ParkingLot(dto.getName(), dto.getTotalCapacity()));
@@ -36,43 +33,31 @@ public class ParkingService {
 
     @Transactional(readOnly = true)
     public ParkingLotDTO getParkingLot() {
-        List<ParkingLot> lots = lotRepository.findAll();
-        if (lots.isEmpty()) {
-            return null;
-        }
-        return toLotDTO(lots.get(0));
+        return lotRepository.findFirstByOrderByIdAsc()
+                .map(this::toLotDTO)
+                .orElse(null);
     }
 
     @Transactional
     public ParkingResponseDTO updateStatus(ParkingStatusDTO dto) {
-        List<ParkingLot> lots = lotRepository.findAll();
+        ParkingLot lot = lotRepository.findFirstByOrderByIdAsc()
+                .orElseGet(() -> new ParkingLot("Default", dto.getTotalSlots()));
 
-        ParkingLot lot;
-        if (lots.isEmpty()) {
-            lot = new ParkingLot("Default", dto.getTotalSlots());
-            lot.setAvailableSlots(dto.getAvailableSlots());
-        } else {
-            lot = lots.get(0);
-            lot.setTotalCapacity(dto.getTotalSlots());
-            lot.setAvailableSlots(dto.getAvailableSlots());
-            lot.setLastUpdated(LocalDateTime.now());
-        }
+        lot.setTotalCapacity(dto.getTotalSlots());
+        lot.setAvailableSlots(dto.getAvailableSlots());
+        lot.setLastUpdated(LocalDateTime.now());
 
         lotRepository.save(lot);
         eventRepository.save(new ParkingEvent(dto.getAvailableSlots(), dto.getTotalSlots()));
 
-        ParkingResponseDTO response = toStatusResponse(lot);
-        broadcaster.broadcast(response);
-        return response;
+        return toStatusResponse(lot);
     }
 
     @Transactional(readOnly = true)
     public ParkingResponseDTO getStatus() {
-        List<ParkingLot> lots = lotRepository.findAll();
-        if (lots.isEmpty()) {
-            return new ParkingResponseDTO(0, 0, true, null);
-        }
-        return toStatusResponse(lots.get(0));
+        return lotRepository.findFirstByOrderByIdAsc()
+                .map(this::toStatusResponse)
+                .orElse(new ParkingResponseDTO(0, 0, true, null));
     }
 
     private ParkingLotDTO toLotDTO(ParkingLot lot) {
