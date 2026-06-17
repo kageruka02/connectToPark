@@ -19,7 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         scheduler.initialize();
 
         registry.enableSimpleBroker("/topic")
-                .setHeartbeatValue(new long[]{0, 0})
+                .setHeartbeatValue(new long[]{10000, 10000})
                 .setTaskScheduler(scheduler);
 
         registry.setApplicationDestinationPrefixes("/app");
@@ -29,6 +29,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .withSockJS()
+                .setHeartbeatTime(10000)
+                .setDisconnectDelay(5000);
     }
 }
