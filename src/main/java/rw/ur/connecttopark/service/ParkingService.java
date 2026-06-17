@@ -79,4 +79,10 @@ public class ParkingService {
                 lot.getLastUpdated()
         );
     }
+
+    public Integer getAvailableSlots() {
+        return lotRepository.findFirstByOrderByIdAsc()
+                .map(ParkingLot::getAvailableSlots)
+                .orElse(0);
+    }
 }

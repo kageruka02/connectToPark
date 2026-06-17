@@ -46,4 +46,12 @@ public class ParkingController {
     public ResponseEntity<ParkingResponseDTO> getStatus() {
         return ResponseEntity.ok(parkingService.getStatus());
     }
+
+    @GetMapping("/available")
+    public ResponseEntity<Integer> getAvailableSlots() {
+        return ResponseEntity.ok(parkingService.getAvailableSlots());
+    }
+
+
+
 }
