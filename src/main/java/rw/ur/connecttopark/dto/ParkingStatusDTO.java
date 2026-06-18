@@ -5,10 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import rw.ur.connecttopark.validation.ValidSlotRange;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@ValidSlotRange
 public class ParkingStatusDTO {
 
     @NotNull(message = "availableSlots is required")

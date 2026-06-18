@@ -235,6 +235,25 @@ class ParkingControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void updateStatus_availableSlotsGreaterThanTotal_returns400() throws Exception {
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":11,\"totalSlots\":10}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.availableSlots").value("availableSlots cannot be greater than totalSlots"));
+    }
+
+    @Test
+    void updateStatus_availableSlotsEqualToTotal_returns200() throws Exception {
+        mockMvc.perform(post("/api/parking/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"availableSlots\":10,\"totalSlots\":10}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availableSlots").value(10))
+                .andExpect(jsonPath("$.totalSlots").value(10));
+    }
+
     // ── GET /api/parking/status ──────────────────────────────────────────────────
 
     @Test
